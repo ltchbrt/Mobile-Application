@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Tracker</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body class="main-body">
+    <header class="sos-header">
+        <div class="header-title">
+            <h2>Emergency</h2>
+        </div>
+        <div class="icon burger-container">
+            <div class="burger"></div>
+        </div>
+        <div class="navbar__menu">
+             <h1 class="navbar__link nav_name"></h1>
+            <a class="navbar__link" href="/dashboard">Dashboard</a>
+            <a class="navbar__link" id="tag" href="/office">Office</a>
+            <a class="navbar__link" id="reports" href="/phonebook">Phone Book</a>
+            <a class="navbar__link" id="reports" href="/logout">Logout</a>
+          </div>
+    </header>
+    <section class="sos-container">
+        <div class="btn-container">
+            <button class="btn-sos">SOS</button>
+        </div>
+        <div class="sos-desc-container">
+            <p class="sos-description">Press the SOS button to send emergency notifications to your contacts</p>
+            <span class="local" style="display: none;"></span>
+            <h1 class="address" id="location" style="display: none;"></h1>
+        </div>
+    </section>
+
+   
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script type="text/javascript"
+src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.6/jstz.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+        $(document).ready(function () {
+          
+            $('.icon').click(function () {
+                $('.icon').toggleClass('icon--active');
+            })
+
+            $('.burger-container').click(function () {
+                $('.navbar__menu').toggleClass('active');
+            })
+
+            var value = $.cookie("id");
+            $.get("/api/get_user", function (index) {
+                var result = JSON.parse(index).item
+                $.each(result, function (_, v) { 
+                    if (v.ID == value){
+                        $(".nav_name").html(v.Name)
+                    }
+                })
+            })
+        })
+
+        function GetAddress(){
+            // document.addEventListener("DOMContentLoaded", function(event) {
+            var address = document.querySelector('.address')
+            if (!navigator.geolocation){
+                console.log("Geolocation is not supported by your browser");
+                ipLookup();
+            } else {
+                navigator.geolocation.getCurrentPosition(success, error);
+            }
+            
+            function success(position) {
+                var latitude  = position.coords.latitude;
+                var longitude = position.coords.longitude;
+                reverseGeocodingWithGoogle(latitude,longitude)
+                console.log("details",position.coords.latitude,position.coords.longitude)
+            }
+            function error() {
+                console.log("Unable to retrieve your location");
+            }
+            function ipLookup() {
+                fetch('https://extreme-ip-lookup.com/json/')
+                .then( res => res.json())
+                .then(response => {
+                    fallbackProcess(response)
+                })
+                .catch((data, status) => {
+                    address.innerText = 'We could not find your location'
+                })
+            }
+            
+            function reverseGeocodingWithGoogle(latitude, longitude) {
+            console.log("data",latitude,longitude)
+                fetch(`https://api.opencagedata.com/geocode/v1/json?q=`+latitude+`+`+longitude+`&key=862240ec47914793b412eb99914e1aac`)
+                .then( res => res.json())
+                .then(response => {
+                console.log("data",response)
+                processUserData(response)
+                })
+                .catch(status => {
+                ipLookup()
+                })
+            }
+            
+            function processUserData(response) {
+                address.innerText = response.results[0].formatted
+               
+              
+              $.ajax({
+                    url: "/api/sms",
+                    data: {
+                    "location": $("#location").html(),
+                    "time":$(".local").html(),
+                    },
+                    success: function (res) {
+                    var result = JSON.parse(res).item
+                    Swal.fire({
+                        toast: true,
+                        position: "bottom-end",
+                        icon: 'success',
+                        title: 'Alert Message Sent',
+                        showConfirmButton: false,
+                        timer: 3000
+                    }).then(function(){ 
+                        alert(result)
+                    location.reload();
+                    }) 
+                    }
+                })
+            }
+            
+            function fallbackProcess(response) {
+                address.innerText = `${response.city}, ${response.country}`
+            }
+            
+            var localTime = jstz.determine().name();
+                      document.querySelector('.local').innerText = new Date().toLocaleString("en-US", {timeZone: localTime});
+            // }); 
+        }
+
+       
+        $('.btn-sos').click(function () {
+            GetAddress()
+          
+        })
+</script>
+</html>

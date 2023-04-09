@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/index.css">
+    <title>Office</title>
+</head>
+<body>
+    <header class="sos-header">
+        <div class="header-title">
+            <h2>Office</h2>
+        </div>
+        <div class="icon burger-container">
+            <div class="burger"></div>
+        </div>
+        <div class="navbar__menu">
+            <h1 class="navbar__link nav_name"></h1>
+            <a class="navbar__link" href="/dashboard">Dashboard</a>
+            <a class="navbar__link" id="tag" href="/office">Office</a>
+            <a class="navbar__link" id="reports" href="/phonebook">Phone Book</a>
+            <a class="navbar__link" id="reports" href="/logout">Logout</a>
+          </div>
+    </header>
+
+    <!-- *Contact Container -->
+    <section class="phonebook-container">
+        <div class="phonebook-content">
+            <table>
+                <thead>
+                  <th>Name</th>
+                  <th>Contact Number</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
+                </thead>
+                <tbody id="details">
+                    <!-- Data Append Here -->
+                </tbody>
+              </table>
+          </div>
+          <div class="add-employee__btn dashboard-add__btn" onclick="AddEmployee()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="25" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </div>
+    </section>
+
+
+       <!-- *Add and Edit Modal Container -->
+    <div class="employee-add__modal dashboard-modal">
+        <div class="modal-container employee-modal__container">
+            <div class="sos-container content-container">
+                <h1 id="header"></h1>
+                <div class="card-detail__container">
+                    <input type="hidden" id="sos_id" placeholder="Name">
+                  <input type="text" id="name" placeholder="Name">
+                </div>
+                <div class="card-detail__container">
+                  <input type="number" id="number" placeholder="Contact Number">
+                </div>
+                <div class="card-detail__container">
+                    <input type="text" id="address" placeholder="Address">
+                  </div>
+                  <div class="btn-container">
+                    <button class="transfer-btn" id="add" onclick="Add()">Add</button>
+                    <button class="transfer-btn" id="modify" onclick="Modify()">Modify</button>
+                    <button class="transfer-btn" onclick="Cancel()">Cancel</button>
+                  </div>
+              </div>
+        </div>
+    </div>
+
+    <div class="employee-delete__modal dashboard-modal_delete">
+        <div class="modal-container employee-delete__container">
+            <div class="sos-container content-container">
+                <h1>Do you want to Delete</h1>
+            <div class="del_info">
+                <input type="hidden" id="sos_del_id" placeholder="Name">
+                <h1 id="del_name"></h1>
+            </div>
+            <div class="del_info">
+                <h1 id="del_number"></h1>
+            </div>
+            <div class="btn-container">
+                <button class="transfer-btn" id="add" onclick="Remove()">Yes</button>
+                <button class="transfer-btn" onclick="Cancel()">No</button>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="text/javascript"
+src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script>
+        $(document).ready(function () {
+            $('.icon').click(function () {
+                $('.icon').toggleClass('icon--active');
+            })
+
+            $('.burger-container').click(function () {
+                $('.navbar__menu').toggleClass('active');
+            })
+
+            var value = $.cookie("id");
+            $.get("/api/get_user", function (index) {
+                var result = JSON.parse(index).item
+                $.each(result, function (_, v) { 
+                    if (v.ID == value){
+                        $(".nav_name").html(v.Name)
+                    }
+                })
+            })
+
+            $.get("/api/get_office", function (index) {
+                var result = JSON.parse(index).item
+                $("#details").empty()
+                $.each(result, function (_, v) {
+                   $("#details").append(`
+                   <tr>
+                  <td>`+v.Name+`</td>
+                  <td>`+v.Number+`</td>
+                  <td><button onclick="Edit(`+v.ID+`)">Modify</button></td>
+                  <td><button onclick="Delete(`+v.ID+`)">Remove</button></td>
+                </tr>
+                   `)
+                })
+            })
+        })
+
+        // Call Modal
+        function Modal(){
+            var employeeModal = document.querySelector(".employee-add__modal");
+            var employeeContainer = document.querySelector(".employee-modal__container");
+            employeeModal.classList.add('show');
+            employeeContainer.classList.add('show');
+            employeeContainer.style.transition = "transform 550ms ease-in-out";
+        }
+
+        // Sweet alert for error
+        function Warning(text){
+            Swal.fire({
+                    toast: true,
+                    position: "center",
+                    icon: 'warning',
+                    title: text,
+                    showConfirmButton: false,
+                    timer: 3000
+                })
+        }
+
+        // Sweet alert for success
+        function Success(text){
+            Swal.fire({
+                        toast: true,
+                        position: "bottom-end",
+                        icon: 'success',
+                        title: text,
+                        showConfirmButton: false,
+                        timer: 3000
+                    }).then(function(){ 
+                    location.reload();
+                    }) 
+        }
+
+        //* Add Button Function
+        function AddEmployee(){
+            $("#modify").hide()
+            $("#header").html('Add Office')
+           Modal()
+        }
+
+        //* Cancel Button Function
+        function Cancel(){
+            window.location.reload()
+        }
+
+
+        //* Save Add Details
+        function Add(){
+            var id = $("#sos_id").val()
+            var name = $("#name").val()
+            var number = $("#number").val()
+            var address = $("#address").val()
+
+            if (name == "" || number == "" || address == ""){
+               Warning('Please Complete Details')
+            }
+            else{  
+                $.ajax({
+                    url: "/api/office",
+                    data: {
+                    "name": name,
+                    "number": number,
+                    "address": address,
+                    },
+                    success: function () {
+                        Success('Added Office Successfully')
+                    }
+                })
+            }
+        }
+
+        //* Display Data of Selected row
+        function Edit(id){
+             $("#add").hide()
+             $("#header").html('Modify Office')
+                Modal()
+            $.get("/api/get_office", function (index) {
+                var result = JSON.parse(index).item
+                $.each(result, function (_, v) {
+                    if(v.ID == id){
+                        $("#sos_id").val(v.ID)
+                        $("#name").val(v.Name)
+                        $("#number").val(v.Number)
+                        $("#address").val(v.Address)
+                    }
+                 
+                })
+            })
+        }
+
+        //* Save modified Data
+        function Modify(){
+            var id = $("#sos_id").val()
+            var name = $("#name").val()
+            var number = $("#number").val()
+            var address = $("#address").val()
+
+
+            if (name == "" || number == "" || address == ""){
+               Warning('Please Complete Details')
+            }
+            else{  
+                $.ajax({
+                    url: "/api/edit_office",
+                    data: {
+                    "id": id,
+                    "name": name,
+                    "number": number,
+                    "address": address,
+                    },
+                    success: function () {
+                        Success('Modify Office Successfully')
+                    }
+                })
+            }
+        }
+
+            // Display Delete Data
+        function Delete(id){ 
+            var employeeModal = document.querySelector(".employee-delete__modal");
+            var employeeContainer = document.querySelector(".employee-delete__container");
+            employeeModal.classList.add('show');
+            employeeContainer.classList.add('show');
+            employeeContainer.style.transition = "transform 550ms ease-in-out";
+
+            $.get("/api/get_office", function (index) {
+                var result = JSON.parse(index).item
+                $.each(result, function (_, v) {
+                    if(v.ID == id){
+                        $("#sos_del_id").val(v.ID)
+                        $("#del_name").html(v.Name)
+                        $("#del_number").html(v.Number)
+                    }
+                })
+            })
+        }
+
+        function Remove(){
+           var id = $("#sos_del_id").val()
+
+           $.ajax({
+                    url: "/api/delete_office",
+                    data: {
+                    "id": id,
+                    },
+                    success: function () {
+                        Success('Remove Office Successfully')
+                    }
+                })
+        }
+
+       
+</script>
+</html>|

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/index.css">
+    <title>Register</title>
+</head>
+<body>
+    <header class="sos-header">
+        <div class="header-title">
+            <h2>Register</h2>
+        </div>
+    </header>
+
+    <!-- *Contact Container -->
+    <section class="contact-container">
+        <div class="sos-container content-container">
+            <div class="card-detail__container">
+              <input type="text" id="name" placeholder="Name">
+            </div>
+            <div class="card-detail__container">
+              <input type="number" id="number" placeholder="Contact Number">
+            </div>
+            <div class="card-detail__container">
+                <input type="number" id="code" placeholder="Number Code">
+              </div>
+              <div class="btn-container">
+                <button class="transfer-btn" onclick="Add()">Add</button>
+                <button class="transfer-btn" onclick="Cancel()">Cancel</button>
+              </div>
+          </div>
+
+    </section>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+        $(document).ready(function () {
+            $('.icon').click(function () {
+                $('.icon').toggleClass('icon--active');
+            })
+
+            $('.burger-container').click(function () {
+                $('.navbar__menu').toggleClass('active');
+            })
+
+            $('.btn-sos').click(function () {
+                alert("Happy Birthday")
+            })
+        })
+
+
+        function Add(){
+            var name = $("#name").val()
+            var number = $("#number").val()
+            var code = $("#code").val()
+            var temp = 0;
+
+            $.get("/api/get_user", function (index) {
+                var result = JSON.parse(index).item
+               
+                $.each(result, function (_, v) {
+                    
+                  if (v.ENC == code || v.Name == name || v.Number == number){
+                    temp = 1;
+                  }
+                })
+                if (temp == 0){
+                  $.ajax({
+                    url: "/api/user",
+                    data: {
+                    "name": name,
+                    "number": number,
+                    "code": code,
+                    },
+                    success: function () {
+                    Swal.fire({
+                        toast: true,
+                        position: "bottom-end",
+                        icon: 'success',
+                        title: 'Account Register Successfully',
+                        showConfirmButton: false,
+                        timer: 3000
+                    }).then(function(){ 
+                    location.replace('/');
+                    }) 
+                    }
+                 })
+                }else{
+                    Swal.fire({
+                        toast: true,
+                        position: "center",
+                        icon: 'warning',
+                        title: 'Account Already Exist',
+                        showConfirmButton: false,
+                        timer: 3000
+                    }).then(function(){ 
+                    location.reload();
+                    }) 
+                }
+            })
+
+
+            if (name == "" || number == "" || code == ""){
+                Swal.fire({
+                    toast: true,
+                    position: "center",
+                    icon: 'warning',
+                    title: 'Please Complete Details',
+                    showConfirmButton: false,
+                    timer: 3000
+                })
+            }
+        }
+
+        function Cancel(){
+            window.location.replace('/')
+        }
+
+          
+</script>
+</html>|
+
